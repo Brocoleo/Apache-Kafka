@@ -30,12 +30,29 @@ public class Application {
                                            Producer<String, Transaction> kafkaProducer) throws ExecutionException, InterruptedException {
 
         while (incomingTransactionsReader.hasNext()) {
-            Transaction transaction = incomingTransactionsReader.next();
-
             /**
              * Complete el código en caso que sea necesario.
              * Envie la transacción al tema(topic) correcto, según el origen de la transaccion y los datos de residencia del usuario
              */
+        	System.out.println("Hola hola mundo");
+
+            Transaction transaction = incomingTransactionsReader.next();
+            ProducerRecord<String, String> record = new ProducerRecord<>("valid-transactions", "hola hola mundito");
+            kafkaProducer.send(record);
+            /*
+            if(transaction.getUser().equals(userResidenceDatabase.getUserResidence())){
+                //topic valid-transactions
+                ProducerRecord<String, String> record = new ProducerRecord<>("valid-transactions", transaction.toString());
+                kafkaProducer.send(record);
+
+            }
+            else{
+                //topic suspicious-transactions
+                ProducerRecord<String, String> record = new ProducerRecord<>("suspicious-transactions", transaction.toString());
+                kafkaProducer.send(record);
+            }
+            */
+            
         }
     }
 
@@ -44,8 +61,8 @@ public class Application {
 
         properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         properties.put(ProducerConfig.CLIENT_ID_CONFIG, "banking-api-service");
-        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, /** Complete el código en caso que sea necesario **/);
-        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,  /** Complete el código en caso que sea necesario **/);
+        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
+        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,  "org.apache.kafka.common.serialization.StringSerializer");
 
         return new KafkaProducer<>(properties);
     }

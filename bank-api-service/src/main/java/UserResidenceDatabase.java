@@ -36,7 +36,7 @@ public class UserResidenceDatabase {
 
         while (scanner.hasNextLine()) {
             String line = scanner.nextLine();
-            String []userResidencePair = line.split(" ");
+            String[] userResidencePair = line.split(" ");
             userToResidence.put(userResidencePair[0], userResidencePair[1]);
         }
         return Collections.unmodifiableMap(userToResidence);
