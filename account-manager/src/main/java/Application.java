@@ -10,6 +10,7 @@ public class Application {
     private static final String BOOTSTRAP_SERVERS = "localhost:9092,localhost:9093,localhost:9094";
 
     public static void main(String[] args) {
+    	System.out.println("Hola holaaa");
         String consumerGroup = "account-manager";
 
         System.out.println("El consumidor es parte del grupo consumidores" + consumerGroup);

@@ -9,11 +9,10 @@ import java.util.concurrent.ExecutionException;
 public class Application {
     private static final String SUSPICIOUS_TRANSACTIONS_TOPIC = "suspicious-transactions";
     private static final String VALID_TRANSACTIONS_TOPIC = "valid-transactions";
-
     private static final String BOOTSTRAP_SERVERS = "localhost:9092,localhost:9093,localhost:9094";
 
     public static void main(String[] args) {
-        Producer<String, Transaction> kafkaProducer = createKafkaProducer(BOOTSTRAP_SERVERS);
+        Producer<String, String> kafkaProducer = createKafkaProducer(BOOTSTRAP_SERVERS);
 
         try {
             processTransactions(new IncomingTransactionsReader(), new UserResidenceDatabase(), kafkaProducer);
@@ -27,36 +26,32 @@ public class Application {
 
     public static void processTransactions(IncomingTransactionsReader incomingTransactionsReader,
                                            UserResidenceDatabase userResidenceDatabase,
-                                           Producer<String, Transaction> kafkaProducer) throws ExecutionException, InterruptedException {
+                                           Producer<String, String> kafkaProducer) throws ExecutionException, InterruptedException {
 
         while (incomingTransactionsReader.hasNext()) {
             /**
              * Complete el código en caso que sea necesario.
              * Envie la transacción al tema(topic) correcto, según el origen de la transaccion y los datos de residencia del usuario
              */
-        	System.out.println("Hola hola mundo");
-
             Transaction transaction = incomingTransactionsReader.next();
-            ProducerRecord<String, String> record = new ProducerRecord<>("valid-transactions", "hola hola mundito");
-            kafkaProducer.send(record);
-            /*
-            if(transaction.getUser().equals(userResidenceDatabase.getUserResidence())){
+            
+            //kafkaProducer.send(new ProducerRecord<String, String>("suspicious-transactions", transaction.toString() ));
+       
+           
+            
+            if(transaction.getTransactionLocation().equals(userResidenceDatabase.getUserResidence(transaction.getUser()))){
                 //topic valid-transactions
-                ProducerRecord<String, String> record = new ProducerRecord<>("valid-transactions", transaction.toString());
-                kafkaProducer.send(record);
+                kafkaProducer.send(new ProducerRecord<String, String>("valid-transactions", transaction.toString() ));
 
             }
             else{
                 //topic suspicious-transactions
-                ProducerRecord<String, String> record = new ProducerRecord<>("suspicious-transactions", transaction.toString());
-                kafkaProducer.send(record);
+            	kafkaProducer.send(new ProducerRecord<String, String>("suspicious-transactions", transaction.toString() ));
             }
-            */
-            
         }
     }
 
-    public static Producer<String, Transaction> createKafkaProducer(String bootstrapServers) {
+    public static Producer<String, String> createKafkaProducer(String bootstrapServers) {
         Properties properties = new Properties();
 
         properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
