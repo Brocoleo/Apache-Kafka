@@ -12,7 +12,7 @@ public class Application {
     private static final String BOOTSTRAP_SERVERS = "localhost:9092,localhost:9093,localhost:9094";
 
     public static void main(String[] args) {
-        Producer<String, String> kafkaProducer = createKafkaProducer(BOOTSTRAP_SERVERS);
+        Producer<String, Transaction> kafkaProducer = createKafkaProducer(BOOTSTRAP_SERVERS);
 
         try {
             processTransactions(new IncomingTransactionsReader(), new UserResidenceDatabase(), kafkaProducer);
@@ -26,32 +26,27 @@ public class Application {
 
     public static void processTransactions(IncomingTransactionsReader incomingTransactionsReader,
                                            UserResidenceDatabase userResidenceDatabase,
-                                           Producer<String, String> kafkaProducer) throws ExecutionException, InterruptedException {
+                                           Producer<String, Transaction> kafkaProducer) throws ExecutionException, InterruptedException {
 
         while (incomingTransactionsReader.hasNext()) {
             /**
              * Complete el código en caso que sea necesario.
              * Envie la transacción al tema(topic) correcto, según el origen de la transaccion y los datos de residencia del usuario
              */
-            Transaction transaction = incomingTransactionsReader.next();
-            
-            //kafkaProducer.send(new ProducerRecord<String, String>("suspicious-transactions", transaction.toString() ));
-       
-           
+            Transaction transaction = incomingTransactionsReader.next();    
             
             if(transaction.getTransactionLocation().equals(userResidenceDatabase.getUserResidence(transaction.getUser()))){
                 //topic valid-transactions
-                kafkaProducer.send(new ProducerRecord<String, String>("valid-transactions", transaction.toString() ));
-
+                kafkaProducer.send(new ProducerRecord<String, String>("valid-transactions", Transaction.TransactionSerializer.serialize("valid-transactions", transaction) ));
             }
             else{
                 //topic suspicious-transactions
-            	kafkaProducer.send(new ProducerRecord<String, String>("suspicious-transactions", transaction.toString() ));
+            	kafkaProducer.send(new ProducerRecord<String, String>("suspicious-transactions", Transaction.TransactionSerializer.serialize("suspicious-transactions", transaction) ));
             }
         }
     }
 
-    public static Producer<String, String> createKafkaProducer(String bootstrapServers) {
+    public static Producer<String, Transaction> createKafkaProducer(String bootstrapServers) {
         Properties properties = new Properties();
 
         properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
