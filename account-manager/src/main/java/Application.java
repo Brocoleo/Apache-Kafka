@@ -1,8 +1,7 @@
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.slf4j.Logger;  
-import org.slf4j.LoggerFactory;  
-
+  
+import java.util.*;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
@@ -16,39 +15,35 @@ public class Application {
 
         System.out.println("El consumidor es parte del grupo consumidores" + consumerGroup);
 
-        Consumer<String, String> kafkaConsumer = createKafkaConsumer(BOOTSTRAP_SERVERS, consumerGroup);
+        Consumer<String, Transaction> kafkaConsumer = createKafkaConsumer(BOOTSTRAP_SERVERS, consumerGroup);
 
         consumeMessages(VALID_TRANSACTIONS_TOPIC, kafkaConsumer);
     }
 
-    public static void consumeMessages(String topic, Consumer<String, String> kafkaConsumer) {
-    	Logger logger = LoggerFactory.getLogger(Consumer.class.getName()
+    public static void consumeMessages(String topic, Consumer<String, Transaction> kafkaConsumer) {
+    	
     	kafkaConsumer.subscribe(Arrays.asList(topic));  
-        try {
-	        while (true) {
-	            /**
-	             * Complete el codigo aca en caso que sea necesario
-	             * Verifique si hay nuevas transacciones a leer desde Kafka.
-	             * Apruebe las transacciones entrantes
-	             */
-	        	 ConsumerRecords<String,String> records=kafkaConsumer.poll(Duration.ofMillis(100));  
-	             for(ConsumerRecord<String,String> record: records){  
-	                 logger.info("Value:" +record.value());    
-	             }  
-	        }
-        } catch(Exeption e) {
-        	System.out.println(e);
-        } finally {
-        	kafkaConsumer.close();
+       
+        while (true) {
+            /**
+             * Complete el codigo aca en caso que sea necesario
+             * Verifique si hay nuevas transacciones a leer desde Kafka.
+             * Apruebe las transacciones entrantes
+             */
+        	 ConsumerRecords<String,Transaction> datos = kafkaConsumer.poll(100);  
+             for(ConsumerRecord<String, Transaction> dato: datos){  
+                 approveTransaction(dato.value());
+             }  
         }
+        
     }
 
-    public static Consumer<String, String> createKafkaConsumer(String bootstrapServers, String consumerGroup) {
+    public static Consumer<String, Transaction> createKafkaConsumer(String bootstrapServers, String consumerGroup) {
         Properties properties = new Properties();
 
         properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
-        properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
+        properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
+        properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, Transaction.TransactionDeserializer.class.getName());
         properties.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroup);
         properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
 
