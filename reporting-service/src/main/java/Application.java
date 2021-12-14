@@ -26,7 +26,7 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
 import java.time.Duration;
-import java.util.Arrays;
+import java.util.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
@@ -52,7 +52,7 @@ public class Application {
          * Ejecute en un loop un mecanismos que consuma todas las transacciones
          * Registre las transacciones para informar según el tema(topic)
          */
-    	kafkaConsumer.subscribe(topics);  
+    	kafkaConsumer.subscribe(Arrays.asList(SUSPICIOUS_TRANSACTIONS_TOPIC));   
         
         while (true) {
             /**
@@ -60,15 +60,16 @@ public class Application {
              * Verifique si hay nuevas transacciones a leer desde Kafka.
              * Apruebe las transacciones entrantes
              */
-        	/*
+        	
         	 ConsumerRecords<String,Transaction> datos = kafkaConsumer.poll(100);  
              for(ConsumerRecord<String, Transaction> dato: datos){
-                 recordTransactionForReporting(dato.valueOf topic, dato);
-                 
+                 recordTransactionForReporting(dato.topic(), dato);
              }
-             */  
              
-             
+             /*
+              * Codigo para multiple topics
+              */
+             /*
         	ConsumerRecords<String, Transaction> datos = kafkaConsumer.poll(100);
 			for (TopicPartition partition : datos.partitions()) {
 			    List<ConsumerRecord<String, Transaction>> partitionRecords = datos.datos(partition);
@@ -78,7 +79,7 @@ public class Application {
 			    long lastOffset = partitionRecords.get(partitionRecords.size() - 1).offset();
 			    consumer.commitSync(Collections.singletonMap(partition, new OffsetAndMetadata(lastOffset + 1)));
 			}
-             
+             */
         }
     }
 
