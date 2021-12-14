@@ -34,25 +34,34 @@ public class Application {
              * Envie la transacción al tema(topic) correcto, según el origen de la transaccion y los datos de residencia del usuario
              */
             Transaction transaction = incomingTransactionsReader.next();    
-            
+            /*
+             * Se envía el topico, y el objeto transaction en cuestión, donde 
+             * ProduceRecord se encargará de serializar el objeto con la propieti definida: serialize 
+             *
+             */
             if(transaction.getTransactionLocation().equals(userResidenceDatabase.getUserResidence(transaction.getUser()))){
                 //topic valid-transactions
-                kafkaProducer.send(new ProducerRecord<String, String>("valid-transactions", Transaction.TransactionSerializer.serialize("valid-transactions", transaction) ));
+                kafkaProducer.send(new ProducerRecord<String, Transaction>("valid-transactions", transaction) );
             }
             else{
                 //topic suspicious-transactions
-            	kafkaProducer.send(new ProducerRecord<String, String>("suspicious-transactions", Transaction.TransactionSerializer.serialize("suspicious-transactions", transaction) ));
+            	kafkaProducer.send(new ProducerRecord<String, Transaction>("suspicious-transactions", transaction) );
             }
         }
     }
 
     public static Producer<String, Transaction> createKafkaProducer(String bootstrapServers) {
+    	/*
+    	 El Value_Serial... se pone el nombre de la clase que serializará
+    	 El key, es el por default 
+    	 
+    	 */
         Properties properties = new Properties();
 
         properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         properties.put(ProducerConfig.CLIENT_ID_CONFIG, "banking-api-service");
         properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
-        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,  "org.apache.kafka.common.serialization.StringSerializer");
+        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,  Transaction.TransactionSerializer.class.getName());
 
         return new KafkaProducer<>(properties);
     }
