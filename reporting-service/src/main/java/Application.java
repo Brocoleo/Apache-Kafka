@@ -26,7 +26,7 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
 import java.time.Duration;
-import java.util.Arrays;
+import java.util.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
@@ -37,7 +37,7 @@ public class Application {
     private static final String BOOTSTRAP_SERVERS = "localhost:9092,localhost:9093,localhost:9094";
 
     public static void main(String[] args) {
-        String consumerGroup = /** Decida el nombre del grupo consumidores.**/
+        String consumerGroup = "reportes";
 
         System.out.println("Consumidores es parte del grupo " + consumerGroup);
 
@@ -52,6 +52,35 @@ public class Application {
          * Ejecute en un loop un mecanismos que consuma todas las transacciones
          * Registre las transacciones para informar según el tema(topic)
          */
+    	kafkaConsumer.subscribe(Arrays.asList(SUSPICIOUS_TRANSACTIONS_TOPIC));   
+        
+        while (true) {
+            /**
+             * Complete el codigo aca en caso que sea necesario
+             * Verifique si hay nuevas transacciones a leer desde Kafka.
+             * Apruebe las transacciones entrantes
+             */
+        	
+        	 ConsumerRecords<String,Transaction> datos = kafkaConsumer.poll(100);  
+             for(ConsumerRecord<String, Transaction> dato: datos){
+                 recordTransactionForReporting(dato.topic(), dato);
+             }
+             
+             /*
+              * Codigo para multiple topics
+              */
+             /*
+        	ConsumerRecords<String, Transaction> datos = kafkaConsumer.poll(100);
+			for (TopicPartition partition : datos.partitions()) {
+			    List<ConsumerRecord<String, Transaction>> partitionRecords = datos.datos(partition);
+			    for (ConsumerRecord<String, Transaction> dato : partitionRecords) {
+			        System.out.println(dato.offset() + ": " + dato.value());
+			    }
+			    long lastOffset = partitionRecords.get(partitionRecords.size() - 1).offset();
+			    consumer.commitSync(Collections.singletonMap(partition, new OffsetAndMetadata(lastOffset + 1)));
+			}
+             */
+        }
     }
 
     public static Consumer<String, Transaction> createKafkaConsumer(String bootstrapServers, String consumerGroup) {
@@ -59,6 +88,15 @@ public class Application {
          * Configure todos los parámetros del cliente de Kafka aquí
          * Cree y devuelva un nuevo consumidor de Kafka
          */
+    	Properties properties = new Properties();
+
+        properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
+        properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, Transaction.TransactionDeserializer.class.getName());
+        properties.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroup);
+        properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+
+        return new KafkaConsumer<>(properties);
     }
 
     private static void recordTransactionForReporting(String topic, Transaction transaction) {

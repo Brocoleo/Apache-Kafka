@@ -38,8 +38,8 @@ public class Transaction {
                 ", transactionLocation='" + transactionLocation + '\'' +
                 '}';
     }
-
-    /**
+    
+   /*
      * Kafka Deserializer.
      * Deserializa una transacción de JSON a un objeto {@link Transaction}
      */
@@ -58,4 +58,5 @@ public class Transaction {
 
         }
     }
+    
 }
