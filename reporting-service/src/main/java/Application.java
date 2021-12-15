@@ -24,7 +24,7 @@
 
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.serialization.StringDeserializer;
-
+import org.apache.kafka.common.TopicPartition;
 import java.time.Duration;
 import java.util.*;
 import java.util.Collections;
@@ -52,7 +52,7 @@ public class Application {
          * Ejecute en un loop un mecanismos que consuma todas las transacciones
          * Registre las transacciones para informar según el tema(topic)
          */
-    	kafkaConsumer.subscribe(Arrays.asList(SUSPICIOUS_TRANSACTIONS_TOPIC));   
+    	kafkaConsumer.subscribe(Arrays.asList(SUSPICIOUS_TRANSACTIONS_TOPIC, VALID_TRANSACTIONS_TOPIC));   
         
         while (true) {
             /**
@@ -61,25 +61,18 @@ public class Application {
              * Apruebe las transacciones entrantes
              */
         	
-        	 ConsumerRecords<String,Transaction> datos = kafkaConsumer.poll(100);  
-             for(ConsumerRecord<String, Transaction> dato: datos){
-                 recordTransactionForReporting(dato.topic(), dato);
-             }
-             
              /*
               * Codigo para multiple topics
-              */
-             /*
-        	ConsumerRecords<String, Transaction> datos = kafkaConsumer.poll(100);
-			for (TopicPartition partition : datos.partitions()) {
-			    List<ConsumerRecord<String, Transaction>> partitionRecords = datos.datos(partition);
-			    for (ConsumerRecord<String, Transaction> dato : partitionRecords) {
-			        System.out.println(dato.offset() + ": " + dato.value());
+             */
+			ConsumerRecords<String, Transaction> records = kafkaConsumer.poll(100);
+			for (TopicPartition partition : records.partitions()) {
+			    List<ConsumerRecord<String, Transaction>> partitionRecords = records.records(partition);
+			    for (ConsumerRecord<String, Transaction> record : partitionRecords) {
+			    	recordTransactionForReporting(record.topic(), record.value());
 			    }
 			    long lastOffset = partitionRecords.get(partitionRecords.size() - 1).offset();
-			    consumer.commitSync(Collections.singletonMap(partition, new OffsetAndMetadata(lastOffset + 1)));
-			}
-             */
+			    kafkaConsumer.commitSync(Collections.singletonMap(partition, new OffsetAndMetadata(lastOffset + 1)));
+			} 
         }
     }
 
@@ -94,7 +87,7 @@ public class Application {
         properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
         properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, Transaction.TransactionDeserializer.class.getName());
         properties.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroup);
-        properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+        properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
 
         return new KafkaConsumer<>(properties);
     }
@@ -111,5 +104,4 @@ public class Application {
                     transaction.getUser(), transaction.getAmount()));
         }
     }
-
 }
