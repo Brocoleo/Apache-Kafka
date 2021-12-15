@@ -32,3 +32,4 @@ bin/kafka-console-producer.sh --broker-list localhost:9092 --topic suspicious-tr
 CONSUMER
 bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic valid-transactions --from-beginning
 bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic suspicious-transactions --from-beginning
+
